@@ -180,7 +180,7 @@
   <section class="hero">
     <p class="kicker">Autonomous exploit disclosure, settled on-chain</p>
     <h1>Sell a bug you can't show. Buy a bug you can't see.</h1>
-    <p class="lede">ZeroLeak is a live marketplace where a whitehat sells a smart-contract exploit to the protocol that's vulnerable to it. The buyer pays into escrow <b>before</b> seeing the vulnerability — and is safe anyway, because the seller first proves they hold a real exploit with a <b>zero-knowledge proof verified on-chain</b>, the disclosure is unlocked by a <b>hash-locked key reveal</b>, and a <b>slashable stake</b> punishes anyone who lies. Connect a wallet and run the whole thing yourself.</p>
+    <p class="lede">ZeroLeak is a live marketplace where a whitehat sells a smart-contract exploit to the protocol that's vulnerable to it. The buyer pays into escrow <b>before</b> seeing the vulnerability — and is safe anyway, because the seller first proves they hold a real exploit with a <b>zero-knowledge proof verified on-chain</b>, and after the key is revealed an <b>impact oracle replays the exploit on-chain</b> and pays the seller only if it actually works. If it doesn't, the contract refunds the buyer and <b>slashes the seller automatically — no arbiter</b>. Connect a wallet and run the whole thing yourself.</p>
     <div class="cta-row">
       <button class="btn primary" id="heroConnect">Connect wallet to trade</button>
       <a class="btn ghost" href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia" target="_blank" rel="noopener">Get free Base Sepolia ETH</a>
@@ -192,7 +192,7 @@
         <div class="step seal"><div class="n mono">phase 1</div><h3>List, sealed</h3><p>The whitehat encrypts the disclosure and proves in zero knowledge that it holds a real exploit — without revealing it.</p><span class="tag">ZK proof verified on-chain</span></div>
         <div class="step escrow"><div class="n mono">phase 2</div><h3>Buy into escrow</h3><p>The protocol's agent pays the price into the contract. It still cannot see the exploit — only the proof that one exists.</p><span class="tag">funds held, not sent</span></div>
         <div class="step"><div class="n mono">phase 3</div><h3>Reveal the key</h3><p>To claim payment the seller must publish the decryption key, unlocking the disclosure for the buyer.</p><span class="tag">hash-locked reveal</span></div>
-        <div class="step proof"><div class="n mono">phase 4</div><h3>Verify &amp; settle</h3><p>The buyer checks the disclosure matches the proof, then finalizes to pay — or disputes to slash the seller's stake.</p><span class="tag">cryptographic integrity check</span></div>
+        <div class="step proof"><div class="n mono">phase 4</div><h3>Prove impact &amp; settle</h3><p>A keeper replays the exploit against the target on-chain and records the result. The seller is paid only if it truly worked; if not, the contract refunds the buyer and slashes the stake — automatically, no arbiter.</p><span class="tag">impact verified on-chain</span></div>
       </div>
     </div>
   </section>
@@ -209,8 +209,11 @@
       <form class="sell" id="sellForm">
         <div class="field">
           <label>Target contract</label>
-          <input id="f-target" class="mono" value="0x63a0b6D9A2703F7E35aBAA829e4053942F67ED5d" />
-          <span class="sub">Defaults to our practice ReentrancyVault.</span>
+          <select id="f-target" class="mono">
+            <option value="0x63a0b6D9A2703F7E35aBAA829e4053942F67ED5d">ReentrancyVault — real exploit works → seller paid</option>
+            <option value="0xAf2Fb6db6c844497fA2526E467Fa9dE1f9AC9f8E">SafeVault — exploit fails → oracle auto-slashes</option>
+          </select>
+          <span class="sub">Two intentionally-built practice targets on Base Sepolia. Pick SafeVault to watch the impact oracle reject a bogus exploit and slash the stake automatically.</span>
         </div>
         <div class="field">
           <label>Severity</label>
@@ -235,6 +238,9 @@
           <button type="submit" class="btn primary" id="listBtn">Generate ZK proof &amp; list</button>
           <span class="sub" id="listStatus" style="margin-left:10px"></span>
         </div>
+        <div class="field full">
+          <span class="sub">After a listing is bought and revealed, an off-chain keeper replays the exploit and posts the verdict on-chain — that's the step that unlocks (or auto-slashes) the payout. The settled trades above were attested this way; a fresh listing shows <b>impact pending oracle</b> until the keeper runs.</span>
+        </div>
       </form>
     </div>
   </section>
@@ -246,12 +252,17 @@
   </section>
 
   <section>
-    <p class="sec-title">A real trade, settled on Base Sepolia</p>
+    <p class="sec-title">Real trades, settled on Base Sepolia by the impact oracle</p>
     <div class="trade">
       <a class="trade-row p1" id="tx-listed" target="_blank" rel="noopener"><span class="phase">Listed</span><span class="desc">Whitehat listed a Critical reentrancy exploit — ZK proof verified by the on-chain verifier</span><span class="hash mono">view ↗</span></a>
       <a class="trade-row p2" id="tx-purchased" target="_blank" rel="noopener"><span class="phase">Purchased</span><span class="desc">Buyer escrowed the price without seeing the exploit</span><span class="hash mono">view ↗</span></a>
-      <a class="trade-row p3" id="tx-revealed" target="_blank" rel="noopener"><span class="phase">Revealed</span><span class="desc">Seller published the decryption key to claim payment</span><span class="hash mono">view ↗</span></a>
-      <a class="trade-row p4" id="tx-finalized" target="_blank" rel="noopener"><span class="phase">Finalized</span><span class="desc">Disclosure verified, seller paid — the deal is complete</span><span class="hash mono">view ↗</span></a>
+      <a class="trade-row p3" id="tx-revealed" target="_blank" rel="noopener"><span class="phase">Revealed</span><span class="desc">Seller published the decryption key</span><span class="hash mono">view ↗</span></a>
+      <a class="trade-row p4" id="tx-attested" target="_blank" rel="noopener"><span class="phase">Impact confirmed</span><span class="desc">A keeper fork-replayed the exploit, drained the target, and wrote works=true on-chain</span><span class="hash mono">view ↗</span></a>
+      <a class="trade-row p4" id="tx-finalized" target="_blank" rel="noopener"><span class="phase">Finalized</span><span class="desc">Only now — impact proven — is the seller paid</span><span class="hash mono">view ↗</span></a>
+    </div>
+    <p style="color:var(--muted);font-size:13.5px;margin:14px 0 8px">And when the exploit is fake, no human is needed to catch it:</p>
+    <div class="trade">
+      <a class="trade-row" style="border-left:3px solid var(--danger)" id="tx-slash" target="_blank" rel="noopener"><span class="phase" style="color:var(--danger)">Impact rejected → auto-slash</span><span class="desc">A bogus exploit on the safe vault drained nothing → the oracle wrote works=false → the contract instantly refunded the buyer and slashed the seller, with no arbiter</span><span class="hash mono">view ↗</span></a>
     </div>
   </section>
 
@@ -261,6 +272,7 @@
       <div class="contract"><div class="role">Marketplace</div><a id="c-market" target="_blank" rel="noopener">…</a></div>
       <div class="contract"><div class="role">ZK verifier (Groth16)</div><a id="c-verifier" target="_blank" rel="noopener">…</a></div>
       <div class="contract"><div class="role">Practice target (vulnerable vault)</div><a id="c-target" target="_blank" rel="noopener">…</a></div>
+      <div class="contract"><div class="role">Control target (safe vault)</div><a id="c-safe" target="_blank" rel="noopener">…</a></div>
     </div>
   </section>
 
@@ -268,8 +280,8 @@
     <p class="sec-title">Why the buyer is safe paying for something unseen</p>
     <div class="guards">
       <div class="guard a"><h4>Proof before payment</h4><p>A zero-knowledge proof, checked on-chain at listing time, shows the seller truly holds an exploit bound to their address — so a listing can't be an empty box or a stolen proof.</p></div>
-      <div class="guard b"><h4>Integrity on reveal</h4><p>The delivered disclosure is checked against the exact commitment the buyer paid for. A seller who swaps in junk fails this check instantly.</p></div>
-      <div class="guard c"><h4>Stake on the line</h4><p>Sellers post a bond. Deliver something that doesn't match, and the buyer disputes — an arbiter slashes the stake to the buyer.</p></div>
+      <div class="guard b"><h4>Impact proven on-chain</h4><p>After reveal, a keeper fork-replays the exploit and writes the result on-chain. The seller is paid only if the exploit actually broke the target — verification is a fact the chain records, not the buyer's opinion.</p></div>
+      <div class="guard c"><h4>Objective auto-slash</h4><p>If the replay shows the exploit doesn't work, the contract itself refunds the buyer and slashes the seller's stake — instantly, with no arbiter and no human judgment.</p></div>
     </div>
   </section>
 </div>
@@ -285,15 +297,18 @@ import {
 const CFG = {
   rpc:"https://sepolia.base.org", explorer:"https://sepolia.basescan.org",
   chainIdHex:"0x14a34", chainId:84532,
-  market:"0xB43D420Ff14fe99ed6F8aCC9Dd2004c95bCA87EA",
+  market:"0xA67822e77acC2bC8Ca58A58aaB372398e62D8D0F",
   verifier:"0xe80BEda38b291AEa50D0dfA69E15782881CCb8C7",
   target:"0x63a0b6D9A2703F7E35aBAA829e4053942F67ED5d",
+  safeVault:"0xAf2Fb6db6c844497fA2526E467Fa9dE1f9AC9f8E",
   trade:{
-    listed:"0x3566f5cf6296c4353ca76ffb03b4fbec90a9ffa434508cfce385226f80717ff6",
-    purchased:"0xb01197b23c776e9b86e69c827fc184175568391eea4df9bc2e8c2a68b3fa3c94",
-    revealed:"0x07305fbcc67ff13112d8be017b987ad33edea023727e7ca6fd1c842b8c96dbf0",
-    finalized:"0x9576bb52f7fc99a9ef2c75d439fff5caec72a893f69140aabdcefb24248b9e72",
+    listed:"0x07abd701218c537989265b92545bd4127490f1dc50cae46ff25307886d61ac86",
+    purchased:"0x74ae6d9603f0c9043eb3892a66182b761e8d8d34a447ab0b6add7cfc550eb8fa",
+    revealed:"0x87a78c034129f77db03d90eb8157559679fbe981165cab8c95508b0645c240d6",
+    attested:"0x63dcc9b54107ca6c0f6ed6e246596bfb640aff1e56c24aca5155eebcde9d3333",
+    finalized:"0xb901860e6e91098953aa29e595c99724b25ba84ea64947d29b7f4cf64fcd0ece",
   },
+  slashAttested:"0x8c5120e626e188eb85e0a9a7ae0932f8f5da745e6aad05eead42dd2dca5374aa",
 };
 const CHAIN = { id:CFG.chainId, name:"Base Sepolia", nativeCurrency:{name:"Ether",symbol:"ETH",decimals:18},
   rpcUrls:{default:{http:[CFG.rpc]}} };
@@ -304,6 +319,7 @@ const ABI = parseAbi([
   "function minStake(uint8) view returns (uint256)",
   "function getListing(uint256) view returns ((address seller,address buyer,address target,uint8 severity,uint96 price,uint96 stake,uint8 status,uint64 purchasedAt,uint64 revealedAt,bytes32 exploitCommitment,bytes32 keyHash,bytes32 revealKey,string cipherCID))",
   "function reputation(address) view returns (uint64 verifiedSales,uint64 disputesLost,uint128 volumeWei)",
+  "function getImpact(uint256) view returns ((bool attested,bool works,uint96 drainedWei,uint64 attestedAt))",
   "function list(address target,uint8 severity,uint96 price,bytes32 exploitCommitment,bytes32 keyHash,string cipherCID,uint256[2] a,uint256[2][2] b,uint256[2] c,uint256[2] input) payable returns (uint256)",
   "function purchase(uint256 id) payable",
   "function reveal(uint256 id,bytes32 revealKey)",
@@ -331,10 +347,13 @@ const setA=(id,href,text)=>{const el=$(id);el.href=href;if(text!==undefined)el.t
 setA("c-market",addrUrl(CFG.market),CFG.market);
 setA("c-verifier",addrUrl(CFG.verifier),CFG.verifier);
 setA("c-target",addrUrl(CFG.target),CFG.target);
+setA("c-safe",addrUrl(CFG.safeVault),CFG.safeVault);
 setA("tx-listed",txUrl(CFG.trade.listed));
 setA("tx-purchased",txUrl(CFG.trade.purchased));
 setA("tx-revealed",txUrl(CFG.trade.revealed));
+setA("tx-attested",txUrl(CFG.trade.attested));
 setA("tx-finalized",txUrl(CFG.trade.finalized));
+setA("tx-slash",txUrl(CFG.slashAttested));
 
 // ---------- toasts ----------
 function toast(msg,kind,ttl=9000){
@@ -462,6 +481,7 @@ async function render(){
 async function renderOne(id){
   let L;try{L=await pub.readContract({address:CFG.market,abi:ABI,functionName:"getListing",args:[BigInt(id)]});}catch{return "";}
   let rep={s:0n,d:0n};try{const r=await pub.readContract({address:CFG.market,abi:ABI,functionName:"reputation",args:[L.seller]});rep={s:r[0],d:r[1]};}catch{}
+  let imp=null;try{const im=await pub.readContract({address:CFG.market,abi:ABI,functionName:"getImpact",args:[BigInt(id)]});imp={attested:im.attested,works:im.works,drained:im.drainedWei};}catch{}
   const sev=SEV[L.severity]||"?",stt=STATUS[L.status]||"?";
   const mine=account&&getAddress(L.seller)===account;
   const isBuyer=account&&L.buyer!==("0x0000000000000000000000000000000000000000")&&getAddress(L.buyer)===account;
@@ -480,7 +500,11 @@ async function renderOne(id){
     else {actions.push(`<span class="rep">sold — awaiting reveal</span>`);}
   } else if(L.status===2){ // Revealed
     if(isBuyer){actions.push(`<button class="btn sm" data-act="open" data-id="${id}">Decrypt &amp; verify</button>`);}
-    actions.push(`<button class="btn sm" data-act="finalize" data-id="${id}" data-rev="${L.revealedAt}">Finalize</button>`);
+    if(!imp||!imp.attested){
+      actions.push(`<span class="rep">awaiting impact oracle — a keeper replays the exploit on-chain before any payout</span>`);
+    } else if(imp.works){
+      actions.push(`<button class="btn sm" data-act="finalize" data-id="${id}" data-rev="${L.revealedAt}">Finalize</button>`);
+    }
     if(isBuyer)actions.push(`<button class="btn danger sm" data-act="dispute" data-id="${id}">Dispute</button>`);
   } else if(L.status===4){ // Disputed
     if(isArb){actions.push(`<button class="btn danger sm" data-act="resolve" data-id="${id}" data-win="0">Slash seller</button><button class="btn sm" data-act="resolve" data-id="${id}" data-win="1">Pay seller</button>`);}
@@ -496,6 +520,7 @@ async function renderOne(id){
       <span>
         <span class="st ${stt}">${stt}</span>
         <span class="rep">seller <a class="mono" style="color:var(--muted);text-decoration:none" target="_blank" rel="noopener" href="${addrUrl(L.seller)}">${short(L.seller)}</a> · <b>${rep.s}</b> sold${rep.d>0n?` · <span style="color:var(--danger)">${rep.d} slashed</span>`:""}</span>
+        ${imp&&imp.attested?`<span class="rep">impact <b style="color:${imp.works?"var(--verified)":"var(--danger)"}">${imp.works?`confirmed · drained ${formatEther(imp.drained)} ETH`:"failed → refunded"}</b></span>`:(L.status===2?`<span class="rep">impact <b style="color:var(--gold)">pending oracle</b></span>`:"")}
       </span>
     </div>
     <div class="lactions" style="padding:0 16px 14px">${actions.join("")}</div>
