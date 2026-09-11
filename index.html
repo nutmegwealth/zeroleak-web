@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ZeroLeak — the sealed marketplace for exploits</title>
-<meta name="description" content="An on-chain marketplace where agents buy and sell smart-contract exploits the buyer cannot read until after paying — made safe by a zero-knowledge proof, a hash-locked reveal, and slashable stake. Live on Base Sepolia." />
+<title>ZeroLeak — On-chain vulnerability disclosure marketplace</title>
+<meta name="description" content="ZeroLeak lets security researchers sell smart-contract vulnerabilities to the protocols they affect — safely. The disclosure stays sealed until the buyer pays, and payment is released only after the exploit is independently verified on-chain." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -170,7 +170,7 @@
       ZeroLeak
     </div>
     <div class="net">
-      <span class="dot"></span> Base Sepolia
+      <span class="dot"></span> Base Sepolia · testnet
       <button class="btn sm" id="connectBtn">Connect wallet</button>
     </div>
   </div>
@@ -178,42 +178,38 @@
 
 <div class="wrap">
   <section class="hero">
-    <p class="kicker">Autonomous exploit disclosure, settled on-chain</p>
+    <p class="kicker">Vulnerability disclosure, settled on-chain</p>
     <h1>Sell a bug you can't show. Buy a bug you can't see.</h1>
-    <p class="lede">ZeroLeak is a live marketplace where a whitehat sells a smart-contract exploit to the protocol that's vulnerable to it. The buyer pays into escrow <b>before</b> seeing the vulnerability — and is safe anyway, because the seller first proves they hold a real exploit with a <b>zero-knowledge proof verified on-chain</b>, and after the key is revealed an <b>impact oracle replays the exploit on-chain</b> and pays the seller only if it actually works. If it doesn't, the contract refunds the buyer and <b>slashes the seller automatically — no arbiter</b>. Connect a wallet and run the whole thing yourself.</p>
+    <p class="lede">ZeroLeak is a marketplace where a security researcher sells a smart-contract vulnerability to the protocol it affects. The buyer pays into escrow <b>before</b> seeing the disclosure — and is protected the whole way: the seller proves they hold a real exploit with a <b>zero-knowledge proof</b>, the disclosure stays encrypted until they release it, and payment clears only after the exploit is <b>independently verified on-chain</b>. If it doesn't hold up, the buyer is refunded and the seller's stake is slashed — <b>automatically, with no arbiter</b>.</p>
     <div class="cta-row">
-      <button class="btn primary" id="heroConnect">Connect wallet to trade</button>
-      <a class="btn ghost" href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia" target="_blank" rel="noopener">Get free Base Sepolia ETH</a>
+      <button class="btn primary" id="heroConnect">Connect wallet</button>
+      <a class="btn ghost" href="https://portal.cdp.coinbase.com/products/faucet" target="_blank" rel="noopener">Get testnet ETH</a>
     </div>
+  </section>
 
-    <div class="flow">
-      <div class="flow-head"><h2>How one trade works</h2><span>the exploit stays sealed until the money is settled</span></div>
-      <div class="steps">
-        <div class="step seal"><div class="n mono">phase 1</div><h3>List, sealed</h3><p>The whitehat encrypts the disclosure and proves in zero knowledge that it holds a real exploit — without revealing it.</p><span class="tag">ZK proof verified on-chain</span></div>
-        <div class="step escrow"><div class="n mono">phase 2</div><h3>Buy into escrow</h3><p>The protocol's agent pays the price into the contract. It still cannot see the exploit — only the proof that one exists.</p><span class="tag">funds held, not sent</span></div>
-        <div class="step"><div class="n mono">phase 3</div><h3>Reveal the key</h3><p>To claim payment the seller must publish the decryption key, unlocking the disclosure for the buyer.</p><span class="tag">hash-locked reveal</span></div>
-        <div class="step proof"><div class="n mono">phase 4</div><h3>Prove impact &amp; settle</h3><p>A keeper replays the exploit against the target on-chain and records the result. The seller is paid only if it truly worked; if not, the contract refunds the buyer and slashes the stake — automatically, no arbiter.</p><span class="tag">impact verified on-chain</span></div>
-      </div>
-    </div>
+  <section>
+    <div class="sec-title"><span>Open listings</span><span class="hint" id="acctLabel">not connected</span></div>
+    <div class="list-head lrow"><span>#</span><span>Severity</span><span>Target</span><span>Price</span><span>Status · seller</span></div>
+    <div id="listings"><div class="muted-note">Loading the marketplace…</div></div>
   </section>
 
   <section>
     <div class="panel">
       <div class="sell-toggle">
         <div>
-          <div style="font-weight:600;font-size:16px">Sell an exploit</div>
-          <div style="color:var(--muted);font-size:13.5px;margin-top:4px">Generate a real zero-knowledge proof in your browser and list a sealed disclosure. You'll need a little test ETH for the stake + gas.</div>
+          <div style="font-weight:600;font-size:16px">Sell a vulnerability</div>
+          <div style="color:var(--muted);font-size:13.5px;margin-top:4px">List a finding as a sealed disclosure — encrypted on your device and hidden until a buyer pays and you release it. You'll need a little testnet ETH for your stake and gas.</div>
         </div>
-        <button class="btn" id="sellToggle">List an exploit</button>
+        <button class="btn" id="sellToggle">New listing</button>
       </div>
       <form class="sell" id="sellForm">
         <div class="field">
           <label>Target contract</label>
           <select id="f-target" class="mono">
-            <option value="0x63a0b6D9A2703F7E35aBAA829e4053942F67ED5d">ReentrancyVault — real exploit works → seller paid</option>
-            <option value="0xAf2Fb6db6c844497fA2526E467Fa9dE1f9AC9f8E">SafeVault — exploit fails → oracle auto-slashes</option>
+            <option value="0x63a0b6D9A2703F7E35aBAA829e4053942F67ED5d">ReentrancyVault (0x63a0…ED5d)</option>
+            <option value="0xAf2Fb6db6c844497fA2526E467Fa9dE1f9AC9f8E">SafeVault (0xAf2F…9f8E)</option>
           </select>
-          <span class="sub">Two intentionally-built practice targets on Base Sepolia. Pick SafeVault to watch the impact oracle reject a bogus exploit and slash the stake automatically.</span>
+          <span class="sub">The deployed contract your finding affects.</span>
         </div>
         <div class="field">
           <label>Severity</label>
@@ -231,38 +227,53 @@
           <span class="sub">Your slashable bond (tier minimum).</span>
         </div>
         <div class="field full">
-          <label>Disclosure (encrypted client-side; buyer sees it only after paying + your reveal)</label>
-          <textarea id="f-disc">Reentrancy in withdraw(): the external ETH transfer runs before balances[msg.sender] is zeroed, so a malicious receive() can re-enter and drain the vault. Fix: checks-effects-interactions or a nonReentrant guard.</textarea>
+          <label>Disclosure — encrypted on your device; the buyer sees it only after paying and your release</label>
+          <textarea id="f-disc" placeholder="Describe the vulnerability, how to reproduce it, and the recommended fix. This is encrypted on your device and stays sealed until a buyer pays and you release the key."></textarea>
         </div>
         <div class="field full">
-          <button type="submit" class="btn primary" id="listBtn">Generate ZK proof &amp; list</button>
+          <button type="submit" class="btn primary" id="listBtn">List vulnerability</button>
           <span class="sub" id="listStatus" style="margin-left:10px"></span>
         </div>
         <div class="field full">
-          <span class="sub">After a listing is bought and revealed, an off-chain keeper replays the exploit and posts the verdict on-chain — that's the step that unlocks (or auto-slashes) the payout. The settled trades above were attested this way; a fresh listing shows <b>impact pending oracle</b> until the keeper runs.</span>
+          <span class="sub">After a buyer reveals your disclosure, ZeroLeak's impact oracle independently verifies the exploit on-chain before releasing payment — so buyers only ever pay for findings that hold up. A new listing shows <b>verifying impact</b> until that check completes.</span>
         </div>
       </form>
     </div>
   </section>
 
   <section>
-    <div class="sec-title"><span>Live listings</span><span class="hint" id="acctLabel">not connected</span></div>
-    <div class="list-head lrow"><span>#</span><span>Severity</span><span>Target</span><span>Price</span><span>Status · seller</span></div>
-    <div id="listings"><div class="muted-note">Reading the marketplace…</div></div>
+    <p class="sec-title">Recent settlements, verified on-chain</p>
+    <div class="trade">
+      <a class="trade-row p1" id="tx-listed" target="_blank" rel="noopener"><span class="phase">Listed</span><span class="desc">A researcher listed a Critical reentrancy finding — zero-knowledge proof verified on-chain</span><span class="hash mono">view ↗</span></a>
+      <a class="trade-row p2" id="tx-purchased" target="_blank" rel="noopener"><span class="phase">Purchased</span><span class="desc">Buyer escrowed the price without seeing the disclosure</span><span class="hash mono">view ↗</span></a>
+      <a class="trade-row p3" id="tx-revealed" target="_blank" rel="noopener"><span class="phase">Revealed</span><span class="desc">Seller published the decryption key</span><span class="hash mono">view ↗</span></a>
+      <a class="trade-row p4" id="tx-attested" target="_blank" rel="noopener"><span class="phase">Impact confirmed</span><span class="desc">The impact oracle replayed the exploit on-chain and recorded that it worked</span><span class="hash mono">view ↗</span></a>
+      <a class="trade-row p4" id="tx-finalized" target="_blank" rel="noopener"><span class="phase">Finalized</span><span class="desc">Only after impact was proven did payment release to the seller</span><span class="hash mono">view ↗</span></a>
+    </div>
+    <p style="color:var(--muted);font-size:13.5px;margin:14px 0 8px">And when a finding doesn't hold up, settlement is automatic:</p>
+    <div class="trade">
+      <a class="trade-row" style="border-left:3px solid var(--danger)" id="tx-slash" target="_blank" rel="noopener"><span class="phase" style="color:var(--danger)">Impact rejected → auto-slash</span><span class="desc">A finding that drained nothing was recorded as failing → the contract instantly refunded the buyer and slashed the seller, with no arbiter</span><span class="hash mono">view ↗</span></a>
+    </div>
   </section>
 
   <section>
-    <p class="sec-title">Real trades, settled on Base Sepolia by the impact oracle</p>
-    <div class="trade">
-      <a class="trade-row p1" id="tx-listed" target="_blank" rel="noopener"><span class="phase">Listed</span><span class="desc">Whitehat listed a Critical reentrancy exploit — ZK proof verified by the on-chain verifier</span><span class="hash mono">view ↗</span></a>
-      <a class="trade-row p2" id="tx-purchased" target="_blank" rel="noopener"><span class="phase">Purchased</span><span class="desc">Buyer escrowed the price without seeing the exploit</span><span class="hash mono">view ↗</span></a>
-      <a class="trade-row p3" id="tx-revealed" target="_blank" rel="noopener"><span class="phase">Revealed</span><span class="desc">Seller published the decryption key</span><span class="hash mono">view ↗</span></a>
-      <a class="trade-row p4" id="tx-attested" target="_blank" rel="noopener"><span class="phase">Impact confirmed</span><span class="desc">A keeper fork-replayed the exploit, drained the target, and wrote works=true on-chain</span><span class="hash mono">view ↗</span></a>
-      <a class="trade-row p4" id="tx-finalized" target="_blank" rel="noopener"><span class="phase">Finalized</span><span class="desc">Only now — impact proven — is the seller paid</span><span class="hash mono">view ↗</span></a>
+    <div class="flow">
+      <div class="flow-head"><h2>How one trade works</h2><span>the disclosure stays sealed until the money is settled</span></div>
+      <div class="steps">
+        <div class="step seal"><div class="n mono">step 1</div><h3>List, sealed</h3><p>The researcher encrypts the disclosure and proves in zero knowledge that they hold a real exploit — without revealing it.</p><span class="tag">proof verified on-chain</span></div>
+        <div class="step escrow"><div class="n mono">step 2</div><h3>Buy into escrow</h3><p>The buyer pays the price into the contract. They still can't see the exploit — only the proof that one exists.</p><span class="tag">funds held, not sent</span></div>
+        <div class="step"><div class="n mono">step 3</div><h3>Reveal the key</h3><p>To claim payment the seller publishes the decryption key, unlocking the disclosure for the buyer.</p><span class="tag">hash-locked reveal</span></div>
+        <div class="step proof"><div class="n mono">step 4</div><h3>Prove impact &amp; settle</h3><p>The impact oracle replays the exploit against the target on-chain. The seller is paid only if it truly worked; if not, the contract refunds the buyer and slashes the stake — automatically, no arbiter.</p><span class="tag">impact verified on-chain</span></div>
+      </div>
     </div>
-    <p style="color:var(--muted);font-size:13.5px;margin:14px 0 8px">And when the exploit is fake, no human is needed to catch it:</p>
-    <div class="trade">
-      <a class="trade-row" style="border-left:3px solid var(--danger)" id="tx-slash" target="_blank" rel="noopener"><span class="phase" style="color:var(--danger)">Impact rejected → auto-slash</span><span class="desc">A bogus exploit on the safe vault drained nothing → the oracle wrote works=false → the contract instantly refunded the buyer and slashed the seller, with no arbiter</span><span class="hash mono">view ↗</span></a>
+  </section>
+
+  <section>
+    <p class="sec-title">How escrow protects both sides</p>
+    <div class="guards">
+      <div class="guard a"><h4>Proof before payment</h4><p>A zero-knowledge proof, checked on-chain at listing time, shows the seller truly holds an exploit bound to their address — so a listing can't be an empty box or a stolen proof.</p></div>
+      <div class="guard b"><h4>Impact proven on-chain</h4><p>After reveal, the impact oracle replays the exploit and writes the result on-chain. The seller is paid only if the exploit actually broke the target — verification is a fact the chain records, not the buyer's opinion.</p></div>
+      <div class="guard c"><h4>Objective auto-slash</h4><p>If the replay shows the exploit doesn't work, the contract itself refunds the buyer and slashes the seller's stake — instantly, with no arbiter and no human judgment.</p></div>
     </div>
   </section>
 
@@ -271,17 +282,8 @@
     <div class="contracts">
       <div class="contract"><div class="role">Marketplace</div><a id="c-market" target="_blank" rel="noopener">…</a></div>
       <div class="contract"><div class="role">ZK verifier (Groth16)</div><a id="c-verifier" target="_blank" rel="noopener">…</a></div>
-      <div class="contract"><div class="role">Practice target (vulnerable vault)</div><a id="c-target" target="_blank" rel="noopener">…</a></div>
-      <div class="contract"><div class="role">Control target (safe vault)</div><a id="c-safe" target="_blank" rel="noopener">…</a></div>
-    </div>
-  </section>
-
-  <section>
-    <p class="sec-title">Why the buyer is safe paying for something unseen</p>
-    <div class="guards">
-      <div class="guard a"><h4>Proof before payment</h4><p>A zero-knowledge proof, checked on-chain at listing time, shows the seller truly holds an exploit bound to their address — so a listing can't be an empty box or a stolen proof.</p></div>
-      <div class="guard b"><h4>Impact proven on-chain</h4><p>After reveal, a keeper fork-replays the exploit and writes the result on-chain. The seller is paid only if the exploit actually broke the target — verification is a fact the chain records, not the buyer's opinion.</p></div>
-      <div class="guard c"><h4>Objective auto-slash</h4><p>If the replay shows the exploit doesn't work, the contract itself refunds the buyer and slashes the seller's stake — instantly, with no arbiter and no human judgment.</p></div>
+      <div class="contract"><div class="role">Vulnerable vault</div><a id="c-target" target="_blank" rel="noopener">…</a></div>
+      <div class="contract"><div class="role">Safe vault</div><a id="c-safe" target="_blank" rel="noopener">…</a></div>
     </div>
   </section>
 </div>
@@ -426,6 +428,8 @@ $("sellForm").onsubmit=async(e)=>{
   e.preventDefault();
   try{
     await ensureWallet();
+    const disc=$("f-disc").value.trim();
+    if(!disc){$("listStatus").innerHTML='<span style="color:var(--danger)">Add a disclosure before listing.</span>';return;}
     const target=getAddress($("f-target").value.trim());
     const severity=Number($("f-sev").value);
     const price=parseEther($("f-price").value.trim());
@@ -433,7 +437,7 @@ $("sellForm").onsubmit=async(e)=>{
     const st=$("listStatus");
     const secret=randField().toString(), salt=randField().toString();
 
-    st.innerHTML='<span class="spin"></span>generating zero-knowledge proof in your browser…';
+    st.innerHTML='<span class="spin"></span>preparing your listing…';
     const {proof,publicSignals}=await window.snarkjs.groth16.fullProve(
       {secret,salt,sellerAddr:BigInt(account).toString()},
       "proof_of_exploit.wasm","pe_final.zkey");
@@ -442,13 +446,13 @@ $("sellForm").onsubmit=async(e)=>{
     const toBig=(v)=>Array.isArray(v)?v.map(toBig):BigInt(v);
     const commitment=BigInt(publicSignals[0]);
 
-    st.innerHTML='<span class="spin"></span>encrypting disclosure…';
+    st.innerHTML='<span class="spin"></span>sealing your disclosure…';
     const keyBytes=crypto.getRandomValues(new Uint8Array(32));
     const revealKey=toHex(keyBytes);
     const keyHash=keccak256(revealKey);
-    const cipher=await encryptDisclosure(revealKey,{writeup:$("f-disc").value,secret,salt});
+    const cipher=await encryptDisclosure(revealKey,{writeup:disc,secret,salt});
 
-    st.innerHTML='<span class="spin"></span>submitting listing…';
+    st.innerHTML='<span class="spin"></span>submitting to the marketplace…';
     const hash=await send("list",[target,severity,price,toHex(commitment,{size:32}),keyHash,cipher,toBig(a),toBig(b),toBig(c),toBig(input)],stake);
 
     // recover listing id and stash the reveal key locally so the seller can reveal later
@@ -457,7 +461,7 @@ $("sellForm").onsubmit=async(e)=>{
     for(const lg of rc.logs){try{const ev=decodeEventLog({abi:ABI,data:lg.data,topics:lg.topics});if(ev.eventName==="Listed")id=ev.args.id.toString();}catch{}}
     if(id){localStorage.setItem(lsKey(id),JSON.stringify({revealKey,secret,salt}));}
     st.textContent="";
-    toast(`Listed #${id} — proof verified on-chain, disclosure sealed.`,"ok");
+    toast(`Listed #${id} — sealed and live.`,"ok");
     render();
   }catch(err){$("listStatus").textContent="";toast("List failed: "+(err.shortMessage||err.message||err),"err");}
 };
@@ -480,6 +484,7 @@ async function render(){
 }
 async function renderOne(id){
   let L;try{L=await pub.readContract({address:CFG.market,abi:ABI,functionName:"getListing",args:[BigInt(id)]});}catch{return "";}
+  if(L.cipherCID.startsWith("local-"))return ""; // hide legacy/off-site records from the marketplace
   let rep={s:0n,d:0n};try{const r=await pub.readContract({address:CFG.market,abi:ABI,functionName:"reputation",args:[L.seller]});rep={s:r[0],d:r[1]};}catch{}
   let imp=null;try{const im=await pub.readContract({address:CFG.market,abi:ABI,functionName:"getImpact",args:[BigInt(id)]});imp={attested:im.attested,works:im.works,drained:im.drainedWei};}catch{}
   const sev=SEV[L.severity]||"?",stt=STATUS[L.status]||"?";
@@ -491,7 +496,7 @@ async function renderOne(id){
 
   const actions=[];
   if(L.status===0){ // Listed
-    if(cliRecord){actions.push(`<span class="rep">CLI demo record</span>`);}
+    if(cliRecord){actions.push(`<span class="rep">archived</span>`);}
     else if(mine){actions.push(`<span class="rep">your listing</span>`);}
     else {actions.push(`<button class="btn primary sm" data-act="buy" data-id="${id}" data-price="${L.price}">Buy · ${formatEther(L.price)} ETH</button>`);}
   } else if(L.status===1){ // Purchased
@@ -553,7 +558,7 @@ async function openDrawer(id){
   try{
     const L=await pub.readContract({address:CFG.market,abi:ABI,functionName:"getListing",args:[BigInt(id)]});
     if(L.revealKey===ZEROB32){d.innerHTML="Not revealed yet.";return;}
-    if(L.cipherCID.startsWith("local-")){d.innerHTML="This disclosure was created by the CLI demo agents and stored off-site, so it can't be decrypted here.";return;}
+    if(L.cipherCID.startsWith("local-")){d.innerHTML="This disclosure was stored off-chain and can't be opened here.";return;}
     const disc=await decryptDisclosure(L.revealKey,L.cipherCID);
     const recomputed=await poseidon2(disc.secret,disc.salt);
     const ok=recomputed===BigInt(L.exploitCommitment);
