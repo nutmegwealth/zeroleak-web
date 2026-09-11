@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ZeroLeak — the sealed marketplace for exploits</title>
+<meta name="description" content="An on-chain marketplace where agents buy and sell smart-contract exploits the buyer cannot read until after paying — made safe by a zero-knowledge proof, a hash-locked reveal, and slashable stake. Live on Base Sepolia." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/snarkjs@0.7.6/build/snarkjs.min.js"></script>
+<style>
+  :root{
+    --ink:#10131c;--panel:#161a26;--panel-2:#1c2131;--line:#2a3145;
+    --text:#e9ebf3;--muted:#98a1ba;
+    --seal:#e0a340;--seal-deep:#b9832c;--verified:#43c1a4;--danger:#e06a5f;--escrow:#7c9cf0;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:radial-gradient(1200px 600px at 78% -10%,#1a2036 0%,rgba(26,32,54,0) 60%),var(--ink);
+    color:var(--text);font-family:"Space Grotesk",system-ui,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,monospace}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+
+  header{border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(16,19,28,.82);backdrop-filter:blur(10px);z-index:20}
+  .bar{display:flex;align-items:center;gap:14px;height:64px}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:700;font-size:19px;letter-spacing:-.01em}
+  .seal-mark{width:26px;height:26px;flex:0 0 auto}
+  .net{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--verified);box-shadow:0 0 0 0 rgba(67,193,164,.6);animation:pulse 2.4s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(67,193,164,.5)}70%{box-shadow:0 0 0 7px rgba(67,193,164,0)}100%{box-shadow:0 0 0 0 rgba(67,193,164,0)}}
+  .btn{font-family:inherit;font-size:14px;font-weight:600;border-radius:9px;padding:9px 15px;border:1px solid var(--line);
+    background:var(--panel-2);color:var(--text);cursor:pointer;transition:.15s}
+  .btn:hover{border-color:var(--seal)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn.primary{background:var(--seal);color:#20160a;border-color:var(--seal)}
+  .btn.primary:hover{background:#ecb055}
+  .btn.ghost{background:transparent}
+  .btn.danger{border-color:rgba(224,106,95,.5);color:#f0b8b2}
+  .btn.sm{padding:6px 11px;font-size:13px}
+
+  .hero{padding:56px 0 26px}
+  .kicker{color:var(--seal);font-weight:600;font-size:14px;margin:0 0 14px}
+  h1{font-size:clamp(30px,5vw,50px);line-height:1.05;letter-spacing:-.02em;font-weight:700;margin:0 0 18px;max-width:16ch}
+  .lede{font-size:clamp(16px,2.1vw,19px);color:var(--muted);max-width:62ch;margin:0}
+  .lede b{color:var(--text);font-weight:600}
+  .cta-row{display:flex;gap:12px;margin-top:26px;flex-wrap:wrap}
+
+  .flow{margin:40px 0 8px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--panel-2),var(--panel));overflow:hidden}
+  .flow-head{padding:15px 20px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+  .flow-head h2{font-size:16px;margin:0;font-weight:600}
+  .flow-head span{font-size:13.5px;color:var(--muted)}
+  .steps{display:grid;grid-template-columns:repeat(4,1fr)}
+  .step{padding:19px;border-right:1px solid var(--line)}
+  .step:last-child{border-right:0}
+  .step .n{font-size:12px;color:var(--muted);margin-bottom:9px}
+  .step h3{margin:0 0 6px;font-size:15px;font-weight:600}
+  .step p{margin:0;font-size:13px;color:var(--muted)}
+  .step .tag{display:inline-block;margin-top:11px;font-size:11.5px;padding:3px 8px;border-radius:20px;border:1px solid var(--line);color:var(--muted)}
+  .step.seal .tag{color:var(--seal);border-color:rgba(224,163,64,.4)}
+  .step.escrow .tag{color:var(--escrow);border-color:rgba(124,156,240,.4)}
+  .step.proof .tag{color:var(--verified);border-color:rgba(67,193,164,.4)}
+
+  section{padding:30px 0}
+  .sec-title{font-size:14px;color:var(--muted);font-weight:600;margin:0 0 16px;display:flex;align-items:center;gap:10px;justify-content:space-between}
+  .sec-title .hint{font-weight:400}
+
+  .panel{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:20px}
+  .sell-toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  form.sell{display:none;margin-top:18px;grid-template-columns:1fr 1fr;gap:14px}
+  form.sell.open{display:grid}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field.full{grid-column:1 / -1}
+  .field label{font-size:13px;color:var(--muted)}
+  .field input,.field select,.field textarea{font-family:inherit;font-size:14px;color:var(--text);background:var(--ink);
+    border:1px solid var(--line);border-radius:9px;padding:10px 12px}
+  .field textarea{min-height:74px;resize:vertical}
+  .field .sub{font-size:12px;color:var(--muted)}
+
+  .contracts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .contract{border:1px solid var(--line);border-radius:11px;padding:15px 16px;background:var(--panel)}
+  .contract .role{font-size:13px;color:var(--muted);margin-bottom:7px}
+  .contract a{font-size:13px;text-decoration:none;color:var(--text);word-break:break-all}
+  .contract a:hover{color:var(--seal)}
+
+  .trade{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+  .trade-row{display:grid;grid-template-columns:150px 1fr auto;gap:14px;align-items:center;padding:13px 18px;border-bottom:1px solid var(--line);text-decoration:none}
+  .trade-row:last-child{border-bottom:0}
+  .trade-row:hover{background:var(--panel-2)}
+  .trade-row .phase{font-weight:600;font-size:14.5px}
+  .trade-row .desc{color:var(--muted);font-size:13.5px}
+  .trade-row .hash{color:var(--seal);font-size:12.5px}
+  .trade-row .phase::before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:9px;vertical-align:middle}
+  .trade-row.p1 .phase::before{background:var(--muted)}
+  .trade-row.p2 .phase::before{background:var(--escrow)}
+  .trade-row.p3 .phase::before{background:var(--seal)}
+  .trade-row.p4 .phase::before{background:var(--verified)}
+
+  .listing{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin-bottom:12px;overflow:hidden}
+  .lrow{display:grid;grid-template-columns:50px 108px 1fr 130px 150px;gap:12px;align-items:center;padding:15px 16px}
+  .list-head{padding:0 16px 8px;font-size:12.5px;color:var(--muted)}
+  .id{font-family:"IBM Plex Mono";color:var(--muted)}
+  .pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:20px;border:1px solid var(--line)}
+  .sev-Critical{color:#f0b8b2;border-color:rgba(224,106,95,.45)}
+  .sev-High{color:var(--seal);border-color:rgba(224,163,64,.4)}
+  .sev-Medium{color:var(--escrow);border-color:rgba(124,156,240,.4)}
+  .sev-Low{color:var(--muted)}
+  .st{font-size:13px;display:flex;align-items:center;gap:8px}
+  .st::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--muted)}
+  .st.Purchased::before{background:var(--escrow)}
+  .st.Revealed::before{background:var(--seal)}
+  .st.Finalized::before{background:var(--verified)}
+  .st.Disputed::before,.st.Refunded::before{background:var(--danger)}
+  .rep{font-size:12.5px;color:var(--muted)}
+  .rep b{color:var(--text);font-weight:600}
+  .price{font-weight:600}
+  .lactions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+  .ldrawer{border-top:1px solid var(--line);padding:15px 16px;background:var(--panel-2);font-size:13.5px;display:none}
+  .ldrawer.open{display:block}
+  .ldrawer h4{margin:0 0 8px;font-size:14px}
+  .ldrawer .kv{color:var(--muted);margin:3px 0}
+  .ldrawer pre{white-space:pre-wrap;word-break:break-word;background:var(--ink);border:1px solid var(--line);border-radius:8px;padding:12px;font-family:"IBM Plex Mono";font-size:12px;color:#cdd3e4;margin:10px 0 0}
+  .verdict{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12.5px;margin-left:6px}
+  .verdict.ok{color:var(--verified);border:1px solid rgba(67,193,164,.4)}
+  .verdict.bad{color:var(--danger);border:1px solid rgba(224,106,95,.4)}
+  .countdown{color:var(--seal);font-size:12.5px}
+
+  .muted-note{color:var(--muted);font-size:14px;padding:18px;border:1px dashed var(--line);border-radius:11px;text-align:center}
+
+  .guards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .guard{border-top:2px solid var(--line);padding:16px 2px 0}
+  .guard.a{border-color:var(--verified)}.guard.b{border-color:var(--seal)}.guard.c{border-color:var(--escrow)}
+  .guard h4{margin:0 0 6px;font-size:14.5px;font-weight:600}
+  .guard p{margin:0;color:var(--muted);font-size:13.5px}
+
+  footer{border-top:1px solid var(--line);color:var(--muted);font-size:13px;padding:26px 0 60px}
+  footer p{margin:0 0 6px}
+  .warn{color:var(--seal)}
+
+  #toasts{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:50;max-width:360px}
+  .toast{background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--seal);border-radius:10px;
+    padding:12px 14px;font-size:13.5px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+  .toast.ok{border-left-color:var(--verified)} .toast.err{border-left-color:var(--danger)}
+  .toast a{color:var(--seal)}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--muted);border-top-color:var(--seal);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px;margin-right:7px}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  @media(max-width:820px){
+    .steps{grid-template-columns:repeat(2,1fr)}
+    .step:nth-child(2){border-right:0}.step:nth-child(1),.step:nth-child(2){border-bottom:1px solid var(--line)}
+    .contracts,.guards{grid-template-columns:1fr}
+    form.sell{grid-template-columns:1fr}
+    .list-head{display:none}
+    .lrow{grid-template-columns:44px 1fr;row-gap:8px}
+    .lactions{justify-content:flex-start}
+    .trade-row{grid-template-columns:1fr;gap:4px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <div class="brand">
+      <svg class="seal-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+        <circle cx="20" cy="20" r="15" fill="#1c2131" stroke="#e0a340" stroke-width="2"/>
+        <circle cx="20" cy="20" r="15" stroke="#e0a340" stroke-width="2" stroke-dasharray="2 3" opacity=".5"/>
+        <path d="M14 20.5l4 4 8-9" stroke="#e0a340" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      ZeroLeak
+    </div>
+    <div class="net">
+      <span class="dot"></span> Base Sepolia
+      <button class="btn sm" id="connectBtn">Connect wallet</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="hero">
+    <p class="kicker">Autonomous exploit disclosure, settled on-chain</p>
+    <h1>Sell a bug you can't show. Buy a bug you can't see.</h1>
+    <p class="lede">ZeroLeak is a live marketplace where a whitehat sells a smart-contract exploit to the protocol that's vulnerable to it. The buyer pays into escrow <b>before</b> seeing the vulnerability — and is safe anyway, because the seller first proves they hold a real exploit with a <b>zero-knowledge proof verified on-chain</b>, the disclosure is unlocked by a <b>hash-locked key reveal</b>, and a <b>slashable stake</b> punishes anyone who lies. Connect a wallet and run the whole thing yourself.</p>
+    <div class="cta-row">
+      <button class="btn primary" id="heroConnect">Connect wallet to trade</button>
+      <a class="btn ghost" href="https://cloud.google.com/application/web3/faucet/ethereum/sepolia" target="_blank" rel="noopener">Get free Base Sepolia ETH</a>
+    </div>
+
+    <div class="flow">
+      <div class="flow-head"><h2>How one trade works</h2><span>the exploit stays sealed until the money is settled</span></div>
+      <div class="steps">
+        <div class="step seal"><div class="n mono">phase 1</div><h3>List, sealed</h3><p>The whitehat encrypts the disclosure and proves in zero knowledge that it holds a real exploit — without revealing it.</p><span class="tag">ZK proof verified on-chain</span></div>
+        <div class="step escrow"><div class="n mono">phase 2</div><h3>Buy into escrow</h3><p>The protocol's agent pays the price into the contract. It still cannot see the exploit — only the proof that one exists.</p><span class="tag">funds held, not sent</span></div>
+        <div class="step"><div class="n mono">phase 3</div><h3>Reveal the key</h3><p>To claim payment the seller must publish the decryption key, unlocking the disclosure for the buyer.</p><span class="tag">hash-locked reveal</span></div>
+        <div class="step proof"><div class="n mono">phase 4</div><h3>Verify &amp; settle</h3><p>The buyer checks the disclosure matches the proof, then finalizes to pay — or disputes to slash the seller's stake.</p><span class="tag">cryptographic integrity check</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="panel">
+      <div class="sell-toggle">
+        <div>
+          <div style="font-weight:600;font-size:16px">Sell an exploit</div>
+          <div style="color:var(--muted);font-size:13.5px;margin-top:4px">Generate a real zero-knowledge proof in your browser and list a sealed disclosure. You'll need a little test ETH for the stake + gas.</div>
+        </div>
+        <button class="btn" id="sellToggle">List an exploit</button>
+      </div>
+      <form class="sell" id="sellForm">
+        <div class="field">
+          <label>Target contract</label>
+          <input id="f-target" class="mono" value="0x63a0b6D9A2703F7E35aBAA829e4053942F67ED5d" />
+          <span class="sub">Defaults to our practice ReentrancyVault.</span>
+        </div>
+        <div class="field">
+          <label>Severity</label>
+          <select id="f-sev"><option value="3">Critical</option><option value="2">High</option><option value="1">Medium</option><option value="0">Low</option></select>
+          <span class="sub">Sets the minimum stake tier.</span>
+        </div>
+        <div class="field">
+          <label>Price (ETH)</label>
+          <input id="f-price" class="mono" value="0.000002" />
+          <span class="sub">What the buyer pays into escrow.</span>
+        </div>
+        <div class="field">
+          <label>Stake (ETH)</label>
+          <input id="f-stake" class="mono" value="0.000001" readonly />
+          <span class="sub">Your slashable bond (tier minimum).</span>
+        </div>
+        <div class="field full">
+          <label>Disclosure (encrypted client-side; buyer sees it only after paying + your reveal)</label>
+          <textarea id="f-disc">Reentrancy in withdraw(): the external ETH transfer runs before balances[msg.sender] is zeroed, so a malicious receive() can re-enter and drain the vault. Fix: checks-effects-interactions or a nonReentrant guard.</textarea>
+        </div>
+        <div class="field full">
+          <button type="submit" class="btn primary" id="listBtn">Generate ZK proof &amp; list</button>
+          <span class="sub" id="listStatus" style="margin-left:10px"></span>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-title"><span>Live listings</span><span class="hint" id="acctLabel">not connected</span></div>
+    <div class="list-head lrow"><span>#</span><span>Severity</span><span>Target</span><span>Price</span><span>Status · seller</span></div>
+    <div id="listings"><div class="muted-note">Reading the marketplace…</div></div>
+  </section>
+
+  <section>
+    <p class="sec-title">A real trade, settled on Base Sepolia</p>
+    <div class="trade">
+      <a class="trade-row p1" id="tx-listed" target="_blank" rel="noopener"><span class="phase">Listed</span><span class="desc">Whitehat listed a Critical reentrancy exploit — ZK proof verified by the on-chain verifier</span><span class="hash mono">view ↗</span></a>
+      <a class="trade-row p2" id="tx-purchased" target="_blank" rel="noopener"><span class="phase">Purchased</span><span class="desc">Buyer escrowed the price without seeing the exploit</span><span class="hash mono">view ↗</span></a>
+      <a class="trade-row p3" id="tx-revealed" target="_blank" rel="noopener"><span class="phase">Revealed</span><span class="desc">Seller published the decryption key to claim payment</span><span class="hash mono">view ↗</span></a>
+      <a class="trade-row p4" id="tx-finalized" target="_blank" rel="noopener"><span class="phase">Finalized</span><span class="desc">Disclosure verified, seller paid — the deal is complete</span><span class="hash mono">view ↗</span></a>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-title">Deployed contracts</p>
+    <div class="contracts">
+      <div class="contract"><div class="role">Marketplace</div><a id="c-market" target="_blank" rel="noopener">…</a></div>
+      <div class="contract"><div class="role">ZK verifier (Groth16)</div><a id="c-verifier" target="_blank" rel="noopener">…</a></div>
+      <div class="contract"><div class="role">Practice target (vulnerable vault)</div><a id="c-target" target="_blank" rel="noopener">…</a></div>
+    </div>
+  </section>
+
+  <section>
+    <p class="sec-title">Why the buyer is safe paying for something unseen</p>
+    <div class="guards">
+      <div class="guard a"><h4>Proof before payment</h4><p>A zero-knowledge proof, checked on-chain at listing time, shows the seller truly holds an exploit bound to their address — so a listing can't be an empty box or a stolen proof.</p></div>
+      <div class="guard b"><h4>Integrity on reveal</h4><p>The delivered disclosure is checked against the exact commitment the buyer paid for. A seller who swaps in junk fails this check instantly.</p></div>
+      <div class="guard c"><h4>Stake on the line</h4><p>Sellers post a bond. Deliver something that doesn't match, and the buyer disputes — an arbiter slashes the stake to the buyer.</p></div>
+    </div>
+  </section>
+</div>
+
+<div id="toasts"></div>
+
+<script type="module">
+import {
+  createPublicClient, createWalletClient, custom, http, parseAbi,
+  formatEther, parseEther, keccak256, toHex, decodeEventLog, getAddress
+} from "https://esm.sh/viem@2.21.55";
+
+const CFG = {
+  rpc:"https://sepolia.base.org", explorer:"https://sepolia.basescan.org",
+  chainIdHex:"0x14a34", chainId:84532,
+  market:"0xB43D420Ff14fe99ed6F8aCC9Dd2004c95bCA87EA",
+  verifier:"0xe80BEda38b291AEa50D0dfA69E15782881CCb8C7",
+  target:"0x63a0b6D9A2703F7E35aBAA829e4053942F67ED5d",
+  trade:{
+    listed:"0x3566f5cf6296c4353ca76ffb03b4fbec90a9ffa434508cfce385226f80717ff6",
+    purchased:"0xb01197b23c776e9b86e69c827fc184175568391eea4df9bc2e8c2a68b3fa3c94",
+    revealed:"0x07305fbcc67ff13112d8be017b987ad33edea023727e7ca6fd1c842b8c96dbf0",
+    finalized:"0x9576bb52f7fc99a9ef2c75d439fff5caec72a893f69140aabdcefb24248b9e72",
+  },
+};
+const CHAIN = { id:CFG.chainId, name:"Base Sepolia", nativeCurrency:{name:"Ether",symbol:"ETH",decimals:18},
+  rpcUrls:{default:{http:[CFG.rpc]}} };
+const ABI = parseAbi([
+  "function nextListingId() view returns (uint256)",
+  "function challengeWindow() view returns (uint256)",
+  "function arbiter() view returns (address)",
+  "function minStake(uint8) view returns (uint256)",
+  "function getListing(uint256) view returns ((address seller,address buyer,address target,uint8 severity,uint96 price,uint96 stake,uint8 status,uint64 purchasedAt,uint64 revealedAt,bytes32 exploitCommitment,bytes32 keyHash,bytes32 revealKey,string cipherCID))",
+  "function reputation(address) view returns (uint64 verifiedSales,uint64 disputesLost,uint128 volumeWei)",
+  "function list(address target,uint8 severity,uint96 price,bytes32 exploitCommitment,bytes32 keyHash,string cipherCID,uint256[2] a,uint256[2][2] b,uint256[2] c,uint256[2] input) payable returns (uint256)",
+  "function purchase(uint256 id) payable",
+  "function reveal(uint256 id,bytes32 revealKey)",
+  "function finalize(uint256 id)",
+  "function dispute(uint256 id,string reason)",
+  "function resolveDispute(uint256 id,bool sellerWon)",
+  "event Listed(uint256 indexed id,address indexed seller,address target,uint8 severity,uint96 price,uint96 stake)",
+]);
+const SEV=["Low","Medium","High","Critical"];
+const STATUS=["Listed","Purchased","Revealed","Finalized","Disputed","Refunded","Cancelled"];
+const ZEROB32="0x"+"0".repeat(64);
+
+const pub = createPublicClient({ chain:CHAIN, transport:http(CFG.rpc) });
+let wallet=null, account=null, arbiterAddr=null, challengeWin=60n;
+let poseidonP=null; // lazy
+
+const $=(id)=>document.getElementById(id);
+const short=(a)=>a.slice(0,6)+"…"+a.slice(-4);
+const addrUrl=(a)=>`${CFG.explorer}/address/${a}`;
+const txUrl=(h)=>`${CFG.explorer}/tx/${h}`;
+const lsKey=(id)=>`zeroleak:${CFG.market.toLowerCase()}:${id}`;
+
+// static links
+const setA=(id,href,text)=>{const el=$(id);el.href=href;if(text!==undefined)el.textContent=text;};
+setA("c-market",addrUrl(CFG.market),CFG.market);
+setA("c-verifier",addrUrl(CFG.verifier),CFG.verifier);
+setA("c-target",addrUrl(CFG.target),CFG.target);
+setA("tx-listed",txUrl(CFG.trade.listed));
+setA("tx-purchased",txUrl(CFG.trade.purchased));
+setA("tx-revealed",txUrl(CFG.trade.revealed));
+setA("tx-finalized",txUrl(CFG.trade.finalized));
+
+// ---------- toasts ----------
+function toast(msg,kind,ttl=9000){
+  const el=document.createElement("div");el.className="toast"+(kind?" "+kind:"");el.innerHTML=msg;
+  $("toasts").appendChild(el);if(ttl)setTimeout(()=>el.remove(),ttl);return el;
+}
+const txToast=(h,label)=>toast(`${label} — <a href="${txUrl(h)}" target="_blank" rel="noopener">${h.slice(0,10)}… ↗</a>`,"ok");
+
+// ---------- crypto helpers (Web Crypto, AES-256-GCM) ----------
+const hexToBytes=(h)=>{h=h.replace(/^0x/,"");const b=new Uint8Array(h.length/2);for(let i=0;i<b.length;i++)b[i]=parseInt(h.substr(i*2,2),16);return b;};
+const b64=(bytes)=>btoa(String.fromCharCode(...bytes));
+const unb64=(s)=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function aesKey(revealKeyHex){return crypto.subtle.importKey("raw",hexToBytes(revealKeyHex),{name:"AES-GCM"},false,["encrypt","decrypt"]);}
+async function encryptDisclosure(revealKeyHex,obj){
+  const key=await aesKey(revealKeyHex);const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},key,new TextEncoder().encode(JSON.stringify(obj))));
+  const blob=new Uint8Array(iv.length+ct.length);blob.set(iv);blob.set(ct,iv.length);return b64(blob);
+}
+async function decryptDisclosure(revealKeyHex,b64blob){
+  const key=await aesKey(revealKeyHex);const blob=unb64(b64blob);
+  const iv=blob.slice(0,12),ct=blob.slice(12);
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv},key,ct);
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function randField(){const b=crypto.getRandomValues(new Uint8Array(31));return BigInt("0x"+[...b].map(x=>x.toString(16).padStart(2,"0")).join(""));}
+async function poseidon2(a,c){
+  if(!poseidonP)poseidonP=import("https://esm.sh/circomlibjs@0.1.7").then(m=>m.buildPoseidon());
+  const p=await poseidonP;return p.F.toObject(p([BigInt(a),BigInt(c)]));
+}
+
+// ---------- wallet ----------
+async function connect(){
+  if(!window.ethereum){toast("No wallet found. Install MetaMask to trade.","err");return;}
+  try{
+    const accs=await window.ethereum.request({method:"eth_requestAccounts"});
+    account=getAddress(accs[0]);
+    try{await window.ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CFG.chainIdHex}]});}
+    catch(e){ if(e.code===4902){ await window.ethereum.request({method:"wallet_addEthereumChain",params:[{
+      chainId:CFG.chainIdHex,chainName:"Base Sepolia",rpcUrls:[CFG.rpc],
+      nativeCurrency:{name:"Ether",symbol:"ETH",decimals:18},blockExplorerUrls:[CFG.explorer]}]}); } }
+    wallet=createWalletClient({account,chain:CHAIN,transport:custom(window.ethereum)});
+    $("connectBtn").textContent=short(account);
+    $("heroConnect").textContent="Connected: "+short(account);
+    $("acctLabel").innerHTML=`connected as <span class="mono">${short(account)}</span>`;
+    window.ethereum.on&&window.ethereum.on("accountsChanged",()=>location.reload());
+    window.ethereum.on&&window.ethereum.on("chainChanged",()=>location.reload());
+    toast("Wallet connected.","ok",4000);
+    render();
+  }catch(e){toast("Connection cancelled.","err",4000);}
+}
+$("connectBtn").onclick=connect;$("heroConnect").onclick=connect;
+
+async function ensureWallet(){ if(!wallet){await connect();} if(!wallet) throw new Error("wallet required"); }
+async function send(fn,args,value){
+  await ensureWallet();
+  const {request}=await pub.simulateContract({address:CFG.market,abi:ABI,functionName:fn,args,value,account});
+  const hash=await wallet.writeContract(request);
+  const t=toast(`<span class="spin"></span>${fn}() sent — waiting for confirmation…`,null,0);
+  const rc=await pub.waitForTransactionReceipt({hash});
+  t.remove();
+  if(rc.status!=="success"){toast(`${fn}() reverted. <a href="${txUrl(hash)}" target="_blank">tx ↗</a>`,"err");throw new Error("reverted");}
+  txToast(hash,`${fn}() confirmed`);
+  return hash;
+}
+
+// ---------- seller: list ----------
+$("sellToggle").onclick=()=>{const f=$("sellForm");f.classList.toggle("open");$("sellToggle").textContent=f.classList.contains("open")?"Close":"List an exploit";};
+$("f-sev").onchange=async()=>{ try{const s=Number($("f-sev").value);const ms=await pub.readContract({address:CFG.market,abi:ABI,functionName:"minStake",args:[s]});$("f-stake").value=formatEther(ms);}catch{} };
+$("sellForm").onsubmit=async(e)=>{
+  e.preventDefault();
+  try{
+    await ensureWallet();
+    const target=getAddress($("f-target").value.trim());
+    const severity=Number($("f-sev").value);
+    const price=parseEther($("f-price").value.trim());
+    const stake=await pub.readContract({address:CFG.market,abi:ABI,functionName:"minStake",args:[severity]});
+    const st=$("listStatus");
+    const secret=randField().toString(), salt=randField().toString();
+
+    st.innerHTML='<span class="spin"></span>generating zero-knowledge proof in your browser…';
+    const {proof,publicSignals}=await window.snarkjs.groth16.fullProve(
+      {secret,salt,sellerAddr:BigInt(account).toString()},
+      "proof_of_exploit.wasm","pe_final.zkey");
+    const cd=await window.snarkjs.groth16.exportSolidityCallData(proof,publicSignals);
+    const [a,b,c,input]=JSON.parse("["+cd+"]");
+    const toBig=(v)=>Array.isArray(v)?v.map(toBig):BigInt(v);
+    const commitment=BigInt(publicSignals[0]);
+
+    st.innerHTML='<span class="spin"></span>encrypting disclosure…';
+    const keyBytes=crypto.getRandomValues(new Uint8Array(32));
+    const revealKey=toHex(keyBytes);
+    const keyHash=keccak256(revealKey);
+    const cipher=await encryptDisclosure(revealKey,{writeup:$("f-disc").value,secret,salt});
+
+    st.innerHTML='<span class="spin"></span>submitting listing…';
+    const hash=await send("list",[target,severity,price,toHex(commitment,{size:32}),keyHash,cipher,toBig(a),toBig(b),toBig(c),toBig(input)],stake);
+
+    // recover listing id and stash the reveal key locally so the seller can reveal later
+    const rc=await pub.getTransactionReceipt({hash});
+    let id=null;
+    for(const lg of rc.logs){try{const ev=decodeEventLog({abi:ABI,data:lg.data,topics:lg.topics});if(ev.eventName==="Listed")id=ev.args.id.toString();}catch{}}
+    if(id){localStorage.setItem(lsKey(id),JSON.stringify({revealKey,secret,salt}));}
+    st.textContent="";
+    toast(`Listed #${id} — proof verified on-chain, disclosure sealed.`,"ok");
+    render();
+  }catch(err){$("listStatus").textContent="";toast("List failed: "+(err.shortMessage||err.message||err),"err");}
+};
+
+// ---------- listings render ----------
+const listingsEl=$("listings");
+async function render(){
+  let next;
+  try{next=await pub.readContract({address:CFG.market,abi:ABI,functionName:"nextListingId"});}
+  catch{listingsEl.innerHTML=`<div class="muted-note">Couldn't reach Base Sepolia just now — retrying shortly.</div>`;return;}
+  try{arbiterAddr=await pub.readContract({address:CFG.market,abi:ABI,functionName:"arbiter"});}catch{}
+  try{challengeWin=await pub.readContract({address:CFG.market,abi:ABI,functionName:"challengeWindow"});}catch{}
+  const total=Number(next)-1;
+  if(total<=0){listingsEl.innerHTML=`<div class="muted-note">No listings yet. List one above and it appears here.</div>`;return;}
+  const ids=Array.from({length:total},(_,i)=>i+1).reverse();
+  const parts=await Promise.all(ids.map(renderOne));
+  listingsEl.innerHTML=parts.join("");
+  wireActions();
+  startCountdowns();
+}
+async function renderOne(id){
+  let L;try{L=await pub.readContract({address:CFG.market,abi:ABI,functionName:"getListing",args:[BigInt(id)]});}catch{return "";}
+  let rep={s:0n,d:0n};try{const r=await pub.readContract({address:CFG.market,abi:ABI,functionName:"reputation",args:[L.seller]});rep={s:r[0],d:r[1]};}catch{}
+  const sev=SEV[L.severity]||"?",stt=STATUS[L.status]||"?";
+  const mine=account&&getAddress(L.seller)===account;
+  const isBuyer=account&&L.buyer!==("0x0000000000000000000000000000000000000000")&&getAddress(L.buyer)===account;
+  const isArb=account&&arbiterAddr&&getAddress(arbiterAddr)===account;
+  const cliRecord=L.cipherCID.startsWith("local-"); // created by the CLI agents; cipher not on-chain
+  const haveKey=!!localStorage.getItem(lsKey(id));
+
+  const actions=[];
+  if(L.status===0){ // Listed
+    if(cliRecord){actions.push(`<span class="rep">CLI demo record</span>`);}
+    else if(mine){actions.push(`<span class="rep">your listing</span>`);}
+    else {actions.push(`<button class="btn primary sm" data-act="buy" data-id="${id}" data-price="${L.price}">Buy · ${formatEther(L.price)} ETH</button>`);}
+  } else if(L.status===1){ // Purchased
+    if(mine){ actions.push(haveKey?`<button class="btn primary sm" data-act="reveal" data-id="${id}">Reveal key</button>`:`<span class="rep">awaiting your reveal (key not in this browser)</span>`);}
+    else if(isBuyer){actions.push(`<span class="rep">paid — awaiting seller reveal</span>`);}
+    else {actions.push(`<span class="rep">sold — awaiting reveal</span>`);}
+  } else if(L.status===2){ // Revealed
+    if(isBuyer){actions.push(`<button class="btn sm" data-act="open" data-id="${id}">Decrypt &amp; verify</button>`);}
+    actions.push(`<button class="btn sm" data-act="finalize" data-id="${id}" data-rev="${L.revealedAt}">Finalize</button>`);
+    if(isBuyer)actions.push(`<button class="btn danger sm" data-act="dispute" data-id="${id}">Dispute</button>`);
+  } else if(L.status===4){ // Disputed
+    if(isArb){actions.push(`<button class="btn danger sm" data-act="resolve" data-id="${id}" data-win="0">Slash seller</button><button class="btn sm" data-act="resolve" data-id="${id}" data-win="1">Pay seller</button>`);}
+    else actions.push(`<span class="rep">disputed — awaiting arbiter</span>`);
+  }
+
+  return `<div class="listing" id="L${id}">
+    <div class="lrow">
+      <span class="id">#${id}</span>
+      <span><span class="pill sev-${sev}">${sev}</span></span>
+      <a class="mono" style="color:var(--muted);text-decoration:none;font-size:13px" target="_blank" rel="noopener" href="${addrUrl(L.target)}">${short(L.target)}</a>
+      <span class="price">${formatEther(L.price)} ETH</span>
+      <span>
+        <span class="st ${stt}">${stt}</span>
+        <span class="rep">seller <a class="mono" style="color:var(--muted);text-decoration:none" target="_blank" rel="noopener" href="${addrUrl(L.seller)}">${short(L.seller)}</a> · <b>${rep.s}</b> sold${rep.d>0n?` · <span style="color:var(--danger)">${rep.d} slashed</span>`:""}</span>
+      </span>
+    </div>
+    <div class="lactions" style="padding:0 16px 14px">${actions.join("")}</div>
+    <div class="ldrawer" id="D${id}"></div>
+  </div>`;
+}
+
+function wireActions(){
+  document.querySelectorAll("[data-act]").forEach(el=>{
+    el.onclick=async()=>{
+      const id=el.dataset.id, act=el.dataset.act;
+      try{
+        if(act==="buy"){ await send("purchase",[BigInt(id)],BigInt(el.dataset.price)); render(); }
+        else if(act==="reveal"){
+          const saved=JSON.parse(localStorage.getItem(lsKey(id))||"null");
+          if(!saved){toast("Reveal key isn't in this browser (listing was made elsewhere).","err");return;}
+          await send("reveal",[BigInt(id),saved.revealKey]); render();
+        }
+        else if(act==="finalize"){ await send("finalize",[BigInt(id)]); render(); }
+        else if(act==="dispute"){ await send("dispute",[BigInt(id),"delivered disclosure failed buyer verification"]); render(); }
+        else if(act==="resolve"){ await send("resolveDispute",[BigInt(id),el.dataset.win==="1"]); render(); }
+        else if(act==="open"){ await openDrawer(id); }
+      }catch(e){/* toast already shown */}
+    };
+  });
+}
+
+async function openDrawer(id){
+  const d=$("D"+id); d.classList.add("open"); d.innerHTML=`<span class="spin"></span>decrypting & verifying…`;
+  try{
+    const L=await pub.readContract({address:CFG.market,abi:ABI,functionName:"getListing",args:[BigInt(id)]});
+    if(L.revealKey===ZEROB32){d.innerHTML="Not revealed yet.";return;}
+    if(L.cipherCID.startsWith("local-")){d.innerHTML="This disclosure was created by the CLI demo agents and stored off-site, so it can't be decrypted here.";return;}
+    const disc=await decryptDisclosure(L.revealKey,L.cipherCID);
+    const recomputed=await poseidon2(disc.secret,disc.salt);
+    const ok=recomputed===BigInt(L.exploitCommitment);
+    d.innerHTML=`
+      <h4>Disclosure <span class="verdict ${ok?"ok":"bad"}">${ok?"integrity verified":"MISMATCH — does not match the paid-for commitment"}</span></h4>
+      <div class="kv">The Poseidon hash of what was delivered ${ok?"equals":"does NOT equal"} the commitment the ZK proof was checked against on-chain.</div>
+      <pre>${(disc.writeup||"").replace(/[<>&]/g,s=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[s]))}</pre>
+      <div class="kv" style="margin-top:10px">${ok?"Safe to finalize (pays the seller) once the challenge window elapses.":"You should Dispute — the arbiter can slash the seller's stake to you."}</div>`;
+  }catch(e){d.innerHTML="Could not decrypt: "+(e.message||e);}
+}
+
+// challenge-window countdowns on finalize buttons
+function startCountdowns(){
+  document.querySelectorAll('[data-act="finalize"]').forEach(btn=>{
+    const revAt=Number(btn.dataset.rev||0); if(!revAt)return;
+    const end=revAt+Number(challengeWin);
+    const tick=()=>{
+      const left=end-Math.floor(Date.now()/1000);
+      if(left>0){btn.disabled=true;btn.textContent=`Finalize in ${left}s`;}
+      else{btn.disabled=false;btn.textContent="Finalize";}
+    };
+    tick(); const iv=setInterval(()=>{ if(!document.body.contains(btn)){clearInterval(iv);return;} tick(); },1000);
+  });
+}
+
+// auto-connect if already authorized
+if(window.ethereum){ window.ethereum.request({method:"eth_accounts"}).then(a=>{ if(a&&a.length){connect();} }); }
+render();
+setInterval(()=>{ if(!document.querySelector(".ldrawer.open")) render(); },20000);
+</script>
+</body>
+</html>
