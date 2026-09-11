@@ -3,7 +3,6 @@
 A marketplace where a security researcher can sell a smart-contract bug to the protocol that's actually vulnerable to it, without either side having to trust the other.
 
 Live on Base Sepolia: https://zeroleak-web.vercel.app/
-
 It actually works — you can connect a wallet, list a bug, buy one, and watch the money move. Not a mockup.
 
 ## How it works
